@@ -1,0 +1,374 @@
+
+
+BIBLIOTECA DE CLASES NET FRAMEWORK
+
+using System.Runtime.Serialization;
+namespace CapaEntidad
+{
+    [DataContract]
+    public class TblCliente
+    {
+        [DataMember]
+        public int IdCliente { get; set; }
+        [DataMember]
+        public string NoIdentificacion { get; set; }
+        [DataMember]
+        public string TipoIdentificacion { get; set; }
+        [DataMember]
+        public string PrimerNombre { get; set; }
+        [DataMember]
+        public string PrimerApellido { get; set; }
+        [DataMember]
+        public string SegundoNombre { get; set; }
+        [DataMember]
+        public string SegundoApellido { get; set; }
+        [DataMember]
+        public int IdDireccion { get; set; }
+        [DataMember]
+        public bool Estado { get; set; }
+    }
+}
+
+
+
+namespace CapaDatos
+{
+    public class DtoClientes
+    {
+        private static string StrConneccion = "Data Source=ASUSTUF\\SQLEXPRESS; Initial Catalog=PruebaApi; Integrated Security=true;";
+        public static List<TblCliente> ListarClientes()
+        {
+            List<TblCliente> LsCliente = new List<TblCliente>();
+
+            using (SqlConnection Link = new SqlConnection(StrConneccion))
+            {
+                using (SqlCommand Comando = new SqlCommand("Sp_ListarClientes", Link))
+                {
+                    Comando.CommandType = System.Data.CommandType.StoredProcedure;
+                    Link.Open();
+
+                    using (SqlDataReader DtRead = Comando.ExecuteReader())
+                    {
+                        while (DtRead.Read())
+                        {
+                            LsCliente.Add(new TblCliente()
+                            {
+                                IdCliente = Convert.ToInt32(DtRead["IdCliente"]),
+                                NoIdentificacion = DtRead["NoIdentificacion"].ToString(),
+                                TipoIdentificacion = DtRead["TipoIdentificacion"].ToString(),
+                                PrimerNombre = DtRead["PrimerNombre"].ToString(),
+                                PrimerApellido = DtRead["PrimerApellido"].ToString(),
+                                SegundoNombre = DtRead["SegundoNombre"].ToString(),
+                                SegundoApellido = DtRead["SegundoApellido"].ToString(),
+                                IdDireccion = int.Parse(DtRead["IdDireccion"].ToString()),
+                                Estado = bool.Parse(DtRead["Estado"].ToString())
+                            });
+                        }
+                    }
+
+                }
+
+            }
+
+            return LsCliente;
+
+        }
+
+        public static TblCliente BuscarCliente(int IdCliente)
+        {
+            TblCliente Datos = new TblCliente();
+
+            using (SqlConnection Link = new SqlConnection(StrConneccion))
+            {
+                using (SqlCommand Comando = new SqlCommand("BuscarClienteId", Link))
+                {
+                    Comando.CommandType = System.Data.CommandType.StoredProcedure;
+                    Comando.Parameters.AddWithValue("@IdCliente",IdCliente);
+                    Link.Open();
+
+                    using (SqlDataReader DtRead = Comando.ExecuteReader())
+                    {
+                        DtRead.Read();
+                        Datos.IdCliente = int.Parse(DtRead["IdCliente"].ToString());
+                        Datos.NoIdentificacion = DtRead["NoIdentificacion"].ToString();
+                        Datos.TipoIdentificacion = DtRead["TipoIdentificacion"].ToString();
+                        Datos.PrimerNombre = DtRead["PrimerNombre"].ToString();
+                        Datos.PrimerApellido = DtRead["PrimerApellido"].ToString();
+                        Datos.SegundoNombre = DtRead["SegundoNombre"].ToString();
+                        Datos.SegundoApellido = DtRead["SegundoApellido"].ToString();
+                        Datos.IdDireccion = int.Parse(DtRead["IdDireccion"].ToString());
+                        Datos.Estado = bool.Parse(DtRead["Estado"].ToString());
+
+                    }
+
+                }
+
+            }
+
+            return Datos;
+        }
+
+
+        public static bool EditarCliente(TblCliente Datos)
+        {
+            try
+            {
+                using (SqlConnection Link = new SqlConnection(StrConneccion))
+                {
+                    using (SqlCommand Comando = new SqlCommand("EditarCliente", Link))
+                    {
+                        Comando.CommandType = System.Data.CommandType.StoredProcedure;
+                        Comando.Parameters.AddWithValue("@IdCliente", Datos.IdCliente);
+                        Comando.Parameters.AddWithValue("@NoIdentificacion", Datos.NoIdentificacion);
+                        Comando.Parameters.AddWithValue("@TipoIdentificacion", Datos.TipoIdentificacion);
+                        Comando.Parameters.AddWithValue("@PrimerNombre", Datos.PrimerNombre);
+                        Comando.Parameters.AddWithValue("@SegundoNombre", Datos.SegundoNombre);
+                        Comando.Parameters.AddWithValue("@PrimerApellido", Datos.PrimerApellido);
+                        Comando.Parameters.AddWithValue("@SegundoApellido", Datos.SegundoApellido);
+                        Comando.Parameters.AddWithValue("@IdDireccion", Datos.IdDireccion);
+                        Comando.Parameters.AddWithValue("@Estado", Datos.Estado);
+                        Link.Open();
+                        Comando.ExecuteNonQuery();
+
+                    }
+
+                }
+
+                return true;
+            }
+            catch(Exception ex)
+            {
+                return false;
+            }
+            
+
+        }
+    }
+}
+
+
+namespace CapaLogica
+{
+    public class Lgc_Cliente
+    {
+        public static List<TblCliente> ListarCliente()
+        {
+            return DtoClientes.ListarClientes();
+        }
+
+        public static bool EditarCliente(TblCliente Datos)
+        {
+            if (Datos.IdCliente == 0)
+            {
+                return false;
+            }
+            return DtoClientes.EditarCliente(Datos);
+        }
+
+        public static TblCliente BuscarClienteId(int IdCliente)
+        {
+           if (IdCliente == 0)
+            {
+                return false;
+            }
+            return DtoClientes.BuscarCliente(IdCliente);
+        }
+    }
+}
+
+[ServiceContract]
+public interface ICliente
+{
+
+	[OperationContract]
+	List<TblCliente> ListaClientes();
+
+	[OperationContract]
+	TblCliente BuscarCliente(int IdCliente);
+
+	[OperationContract]
+	bool ActualizarCliente(TblCliente Datos);
+}
+
+
+public class Cliente : ICliente
+{
+    public List<TblCliente> ListaClientes()
+    {
+        return Lgc_Cliente.ListarCliente();
+    }
+
+    public TblCliente BuscarCliente(int IdCliente)
+    {
+        return Lgc_Cliente.BuscarClienteId(IdCliente);
+    }
+
+    public bool ActualizarCliente(TblCliente Datos)
+    {
+        return Lgc_Cliente.EditarCliente(Datos);
+    }
+}
+
+
+ASP NET
+
+
+CONTROLLER HOME
+
+
+        public async Task<IActionResult> Index()
+        {
+            MiServicio.ClienteClient oClient = new MiServicio.ClienteClient();
+
+            var ListadoClientes = await oClient.ListaClientesAsync();
+
+            ViewBag.ListadoCliente = ListadoClientes;
+
+            return View();
+        }
+
+        public async Task<IActionResult> Editar(int IdCliente)
+        {
+            MiServicio.ClienteClient oClient = new MiServicio.ClienteClient();
+
+            var RsCliente = await oClient.BuscarClienteAsync(IdCliente);
+            
+            return View(RsCliente);
+        }
+
+        public async Task<IActionResult> Actualizar(TblCliente Datos)
+        {
+            MiServicio.ClienteClient oClient = new MiServicio.ClienteClient();
+
+            var RsCliente = await oClient.ActualizarClienteAsync(Datos);
+            return RedirectToAction("Index");
+        }
+
+
+
+
+VISTA HOME INDEX
+
+@{
+    ViewData["Title"] = "LISTADO";
+}
+
+<div class="text-center">
+    <h1 class="display-4">LISTADO DE CLIENTES</h1>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>Id</td>
+                <td>Nombre</td>
+                <td>Identificación</td>
+                <td>Estado</td>
+                <td>Accion</td>
+            </tr>
+        </thead>
+        <tbody>
+
+            @foreach (var Cliente in ViewBag.ListadoCliente)
+            {
+                <tr>
+                    <form asp-action="Editar" asp-controller="Home">
+                        <input hidden name="IdCliente" value="@Cliente.IdCliente" />
+                    <td>@Cliente.IdCliente</td>
+                    <td>@Cliente.TipoIdentificacion: @Cliente.NoIdentificacion</td>
+                    <td>@Cliente.PrimerNombre @Cliente.PrimerApellido @Cliente.SegundoApellido</td>
+                    <td>
+                        @if (Cliente.Estado)
+                        {
+                            <label>Activo</label>
+                        }
+                        else
+                        {
+                            <label>Inactivo</label>
+                        }
+                    </td>
+                    <td><button type="submit" class="btn btn-primary">Editar</button></td>
+                    </form>
+
+                </tr>
+            }
+
+        </tbody>
+    </table>
+
+</div>
+
+
+
+VISTA DE EDITAR
+@model MiServicio.TblCliente
+
+@{
+    ViewData["Title"] = "Editar";
+}
+
+<h1>Editar</h1>
+
+<h4>TblCliente</h4>
+<hr />
+<form asp-action="Actualizar">
+
+    <div class="row">
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="form-group col-6">
+            <label asp-for="IdCliente" class="control-label"></label>
+            <input asp-for="IdCliente" readonly class="form-control" />
+            <span asp-validation-for="IdCliente" class="text-danger"></span>
+        </div>
+        <div class="form-group form-check col-6">
+            <label class="form-check-label">
+                <input class="form-check-input" asp-for="Estado" /> @Html.DisplayNameFor(model => model.Estado)
+            </label>
+        </div>
+
+        <div class="form-group col-4">
+            <label asp-for="IdDireccion" class="control-label"></label>
+            <input asp-for="IdDireccion" class="form-control" />
+            <span asp-validation-for="IdDireccion" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="NoIdentificacion" class="control-label"></label>
+            <input asp-for="NoIdentificacion" class="form-control" />
+            <span asp-validation-for="NoIdentificacion" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="PrimerApellido" class="control-label"></label>
+            <input asp-for="PrimerApellido" class="form-control" />
+            <span asp-validation-for="PrimerApellido" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="PrimerNombre" class="control-label"></label>
+            <input asp-for="PrimerNombre" class="form-control" />
+            <span asp-validation-for="PrimerNombre" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="SegundoApellido" class="control-label"></label>
+            <input asp-for="SegundoApellido" class="form-control" />
+            <span asp-validation-for="SegundoApellido" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="SegundoNombre" class="control-label"></label>
+            <input asp-for="SegundoNombre" class="form-control" />
+            <span asp-validation-for="SegundoNombre" class="text-danger"></span>
+        </div>
+        <div class="form-group col-4">
+            <label asp-for="TipoIdentificacion" class="control-label"></label>
+            <input asp-for="TipoIdentificacion" class="form-control" />
+            <span asp-validation-for="TipoIdentificacion" class="text-danger"></span>
+        </div>
+        <div class="form-group col-12 d-flex justify-content-between">
+            <input type="submit" value="Guardar" class="btn btn-primary" />
+            <button asp-action="Index" class="btn btn-danger">Cancelar</button>
+        </div>
+    </div>
+</form>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
